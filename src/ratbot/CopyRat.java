@@ -26,9 +26,9 @@ public class CopyRat extends RatBot{
     public int chooseAction(){
         moveNumber++;
         if(moveNumber==499){
-            if(roundNumber==99){
-                return 0;
-            }
+//            if(roundNumber==99){
+//                return 0;
+//            }
             moveNumber = -1;
             roundNumber++;
             return actions[roundNumber-1][499];

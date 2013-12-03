@@ -163,7 +163,8 @@ public class Rat extends RatBotActor
             {
                 numCheeseToPlace += CHEESES_TO_PLACE;
                 //Move to a center Location!!!
-                moveTo(getRandomUnnocupiedCenterLocation());  
+//                moveTo(getRandomUnnocupiedCenterLocation());  
+                moveTo(getDeterministicCenterLocation());
             }
         }
     }
@@ -180,7 +181,8 @@ public class Rat extends RatBotActor
         {
             numCheeseToPlace += CHEESES_TO_PLACE;
             //Move to a center Location!!!
-            loc = getRandomUnnocupiedCenterLocation();           
+//            loc = getRandomUnnocupiedCenterLocation();     
+            loc = getDeterministicCenterLocation();
         }
         score += in.getPointValue();
         return loc;
@@ -211,6 +213,23 @@ public class Rat extends RatBotActor
             return new Location(small,small);
         }
         return unnocupiedCenterLocs.get(randy.nextInt(unnocupiedCenterLocs.size()) );
+    }
+    
+    private Location getDeterministicCenterLocation(){        
+        
+        int small = (getGrid().getNumCols()-RatBotsArena.CENTER_SIZE)/2;
+        int big = small+RatBotsArena.CENTER_SIZE-1;
+        
+        for(int r = small; r < big; r++)
+        {
+            for(int c = small; c < big; c++)
+            {
+                Location loc = new Location(r,c);
+                if(!(getGrid().get(loc) instanceof Rat))
+                    return loc;
+            }
+        } 
+        return new Location(small,small);
     }
     
     @Override

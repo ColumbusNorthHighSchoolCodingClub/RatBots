@@ -38,7 +38,11 @@ public class RatBotWorld extends ActorWorld
     public static final int NUM_ROUNDS_IN_MATCH = 100;
 
     private static final String DEFAULT_MESSAGE = "RatBots is awesome.";
-    private static Random randy = new Random();
+    private static Random seedGenerator = new Random();
+    private static final long seed = seedGenerator.nextLong();
+//    private static Random randy = new Random(seed);
+    private static Random randy = new Random(0);
+    private int deterministicSeed = 0;
     private File matchFile = null;
 
     private static int moveNum = 0;
@@ -66,7 +70,7 @@ public class RatBotWorld extends ActorWorld
         isRecording = in;
         if(isRecording){
             System.out.println("recorder activated              RatBotWorld");
-            recorder = new GridRecorder((RatBotsGrid<RatBotActor>)getGrid());
+            recorder = new GridRecorder((RatBotsGrid<RatBotActor>)getGrid(),seed);
             recorder.setRoundsInAMatch(NUM_ROUNDS_IN_MATCH);
 //            for(Rat r:ratsInMaze){
 //                recorder.increaseRatArraySize(NUM_MOVES_IN_ROUND);
@@ -82,6 +86,7 @@ public class RatBotWorld extends ActorWorld
      */
     public RatBotWorld()
     {
+        randy = new Random(seed);
         initializeGridForRound();
         initializeMatch();
     }
@@ -121,6 +126,7 @@ public class RatBotWorld extends ActorWorld
         moveNum = 0;
         roundNum = 1;   //changed from 0 to 1 by CVH
         matchReady = true;
+        deterministicSeed = (int)(seed%100);
         
         if(roundRobin)
         {
@@ -195,8 +201,8 @@ public class RatBotWorld extends ActorWorld
         for(Rat r : ratsInMaze) 
         {
             r.initialize();
-            r.putSelfInGrid(getGrid(), getRandomEmptyCenterLocation());
-            r.setDirection(getRandomDirection());
+//            r.putSelfInGrid(getGrid(), getRandomEmptyCenterLocation());
+            r.putSelfInGrid(getGrid(),getDeterministicCenterLocation());
         }
         moveNum = 0;
         
@@ -210,6 +216,10 @@ public class RatBotWorld extends ActorWorld
             FileReader f = new FileReader(matchFile);
             BufferedReader br = new BufferedReader(f);
             String line;
+            if((line=br.readLine())!=null){
+                String seed = line.substring(line.indexOf(':')+1).trim();
+                randy = new Random(Long.parseLong(seed));
+            }
             while((line=br.readLine())!=null){
                 if(line.contains("Round #:")){
                     readRound(br);
@@ -283,7 +293,6 @@ public class RatBotWorld extends ActorWorld
         int roundMoveNum = 500;
         boolean isReadingCheese = false;
         boolean isReadingWalls = false;
-        boolean isReadingRandoms = false;
         try{
             while((line=br.readLine())!=null){
                 if(line.contains("Number of rats:")){
@@ -321,18 +330,14 @@ public class RatBotWorld extends ActorWorld
                 }else if(line.contains("Walls:")){
                     isReadingCheese = false;
                     isReadingWalls = true;
-                }else if(isReadingWalls && !line.contains("Random")){
+                }else if(isReadingWalls && !line.contains("End")){
                     //takes the number before the first comma
                     //the number between the first and last commas
                     //and the number after the last comma
                     //and sets walls[first][second][third] equal to true
                     round.walls[Integer.parseInt(line.substring(0,line.indexOf(',')).trim())][Integer.parseInt(line.substring(line.indexOf(',')+1,line.lastIndexOf(',')).trim())][Integer.parseInt(line.substring(line.lastIndexOf(',')+1,line.length()).trim())]=true;
-                }else if(line.contains("Random numbers:")){
-                    isReadingWalls = false;
-                    isReadingRandoms = true;
-                }else if(isReadingRandoms && !line.contains("End")){
-                    round.randoms.add(Integer.parseInt(line.trim()));
-                }else if(line.contains("End of round")){
+                }else 
+                    if(line.contains("End of round")){
                     rounds.add(round);
                     break;
                 }
@@ -377,7 +382,7 @@ public class RatBotWorld extends ActorWorld
         roundNum++;
     }
     
-    //inheirits javadoc comment from world.
+    //inherits javadoc comment from world.
     @Override
     public void show()
     {
@@ -434,27 +439,20 @@ public class RatBotWorld extends ActorWorld
             }
         }
         
-        if(actors.size() > 1 && !isReplaying)
-        {
+        if(actors.size() > 1){
+            
             //shuffle their order for acting.
             for(int z=0;z<actors.size()*2;z++)
             {
                 //Pick a random one.
                 int from = randy.nextInt(actors.size());
                 
-                if(isRecording)recorder.addRandom(from);
-                System.out.println("SHUFFLE");
-                
-                //Swap it to the front.
+                //Swap it to the front. 
                 RatBotActor a = actors.get(from);
                 RatBotActor b = actors.get(0);
                 actors.set(from,b);
-                actors.set(0,a);              
+                actors.set(0,a);  
             }
-            System.out.println("Shuffled");
-        }
-        if(isReplaying){
-            //sort the actors by previous action priority
         }
 
         
@@ -466,6 +464,9 @@ public class RatBotWorld extends ActorWorld
 //                    if(a instanceof Rat){
 //                        System.out.println(((Rat)a).getRatBot().getName()+" "+actors.indexOf(a));
 //                    }
+                    if(a instanceof Rat && roundNum ==100 && moveNum>=490){
+                        System.out.println("Move "+moveNum+" "+((Rat)a).getLastAction());
+                    }
                 }
             }
             
@@ -584,7 +585,7 @@ public class RatBotWorld extends ActorWorld
     public void add(RatBot bot)
     {
         Rat newRat = new Rat(bot,RatBotsColorAssigner.getAssignedColor());
-        Location inCenter = this.getRandomEmptyCenterLocation();
+//        Location inCenter = this.getRandomEmptyCenterLocation();
         allrats.add(newRat);
         
         ratsInMaze.add(newRat);
@@ -604,8 +605,6 @@ public class RatBotWorld extends ActorWorld
     public int getRandomDirection()
     {
         int i = randy.nextInt(4);
-        
-        if(isRecording) recorder.addRandom(i);
         System.out.println("RANDOM DIRECTION");
         
         return i;
@@ -637,11 +636,35 @@ public class RatBotWorld extends ActorWorld
             return new Location(15,15);
         }
         int r = randy.nextInt(emptyLocs.size());
-        
-        if(isRecording)recorder.addRandom(r);
         System.out.println("RANDOM EMPTY");
         
         return emptyLocs.get(r);       
+    }
+    
+    private Location getDeterministicCenterLocation(){        
+        
+        int small = (getGrid().getNumCols()-RatBotsArena.CENTER_SIZE)/2;
+        int big = small+RatBotsArena.CENTER_SIZE-1;
+        ArrayList<Location> unoccupiedSpaces = new ArrayList();
+        
+        for(int r = small; r < big; r++)
+        {
+            for(int c = small; c < big; c++)
+            {
+                Location loc = new Location(r,c);
+                if(!(getGrid().get(loc) instanceof Rat))
+                    unoccupiedSpaces.add(loc);
+            }
+        } 
+        
+        if(unoccupiedSpaces.size()>0){
+            deterministicSeed = Math.abs(deterministicSeed);
+            Location loc = unoccupiedSpaces.get(deterministicSeed%unoccupiedSpaces.size());
+            deterministicSeed = (int)Math.pow(deterministicSeed,3)%100;
+            return loc;
+        }
+        
+        return new Location(small,small);
     }
       
 }

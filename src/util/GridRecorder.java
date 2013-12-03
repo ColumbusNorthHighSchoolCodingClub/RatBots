@@ -30,11 +30,10 @@ public class GridRecorder {
     private ArrayList<String> old2 = new ArrayList();
     private ArrayList<String> old3 = new ArrayList();
     
-    private ArrayList<Integer> randoms = new ArrayList();
-    
     private int[][] actions;
     private int[][] cheeseLocs;
     private int[][] ratLocs;
+    private long seed = 0;;
     private boolean[][][] walls;
     private int moveNum;
     private int roundsSaved = 0;
@@ -56,7 +55,8 @@ public class GridRecorder {
 
     public void setWalls(boolean[][][] in) {walls = in;}
     
-    public void addRandom(int in){randoms.add(in);}
+    public long getSeed(){return seed;}
+    public void setSeed(long in){seed = in;}    
     
     //modifies the location and action arrays to accomodate an additional rat
     public void increaseRatArraySize(){
@@ -95,12 +95,9 @@ public class GridRecorder {
     
     public int[][] getRatLocs(){return ratLocs;}
 
-    public static void main(String args[]) { //written to test
-        GridRecorder g = new GridRecorder(new RatBotsGrid<RatBotActor>(24, 24));
-        g.testMySkill();
-    }
-
-    public GridRecorder(RatBotsGrid<RatBotActor> g) {    //create one of these with every grid
+    public GridRecorder(RatBotsGrid<RatBotActor> g, long s) {    //create one of these with every grid
+        seed=s;
+        record.add("Random seed: "+seed);
         grid = g;
         moveNum = 0;
         initForRound();
@@ -163,10 +160,6 @@ public class GridRecorder {
                 }
             }
         }
-        list.add("Random numbers: ");
-        for(int index = 0; index < randoms.size(); index++){
-            list.add(randoms.get(index)+"");
-        }
         list.add("End of round");
     }
     
@@ -204,7 +197,6 @@ public class GridRecorder {
         getStartCheesePositions();
         getStartRatPositions();
         setWalls(grid.getWalls());
-        randoms = new ArrayList();
     }
 
     public void getStartCheesePositions() {  //call this method at the beginning of each round

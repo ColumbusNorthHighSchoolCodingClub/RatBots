@@ -20,9 +20,7 @@ public class RoundData {
     public int[][] actions;
     public int[][] startRatLocs;
     public int[][] cheeseLocs;
-    public boolean[][][] walls;
-    
-    private int randomIndex;
+    public boolean[][][] walls;    
     
     public ArrayList<Integer> randoms;
     
@@ -35,15 +33,6 @@ public class RoundData {
             }            
         }
         randoms = new ArrayList();
-        randomIndex = 0;
-    }
-    
-    public int nextRandom(){
-        randomIndex++;
-        if(randomIndex-1>=randoms.size()){
-            randomIndex = 1;
-        }
-        return randoms.get(randomIndex-1);
     }
     
 }
