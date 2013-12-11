@@ -73,6 +73,8 @@ public class RatBotsScoreBoard extends JPanel
         
         super.paintComponent(g2);
         
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        
         g.setFont(g.getFont().deriveFont((float) 16));
         g.drawString("Round: "+RatBotWorld.getRoundNum()+"   Moves Completed: "+RatBotWorld.getMoveNum(), X_OFFSET, 30);
 
